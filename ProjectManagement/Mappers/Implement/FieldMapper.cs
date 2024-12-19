@@ -19,5 +19,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return field;
         }
+
+        public DataTable MapToTableType(List<Field> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

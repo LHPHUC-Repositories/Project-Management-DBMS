@@ -21,7 +21,6 @@ namespace ProjectManagement
         public event EventHandler ButtonAddClicked;
         public event EventHandler ButtonDeleteClicked;
         public event EventHandler ClickEvaluate;
-
         
         private Users user = new Users();
         private Evaluation evaluation = new Evaluation();
@@ -29,6 +28,7 @@ namespace ProjectManagement
         private Color uCBackColor = Color.White;
         private Color uCHoverColor = SystemColors.ButtonFace;
         private bool isAdd = false;
+
         public UCUserMiniLine()
         {
             InitializeComponent();

@@ -3,6 +3,8 @@ using ProjectManagement.Mappers.Implement;
 using ProjectManagement.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -12,26 +14,69 @@ namespace ProjectManagement.DAOs
 {
     internal class TechnologyDAO
     {
+        private static Technology SelectOnly(string technologyId)
+        {
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Technology, [new("technologyId", technologyId)]);
+
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                TechnologyMapper fieldMapper = new TechnologyMapper();
+                return fieldMapper.MapRow(dataTable.Rows[0]);
+            }
+
+            return null;
+        }
         public static List<Technology> SelectListByProject(string projectId)
         {
-            string sqlStr = string.Format("SELECT T.* FROM {0} AS T " +
-                "JOIN (SELECT technologyId FROM {1} WHERE projectId = @ProjectId) AS PT ON T.technologyId = PT.technologyId",
-                DBTableNames.Technology, DBTableNames.ProjectTechnology);
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.ProjectTechnology, [new("projectId", projectId)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter> { new SqlParameter("@ProjectId", projectId) };
+            List<Technology> technologies = new List<Technology>();
 
-            return DBGetModel.GetModelList(sqlStr, parameters, new TechnologyMapper());
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    technologies.Add(SelectOnly(row["technologyId"].ToString()));
+                }
+            }
+
+            return technologies;
         }
         public static List<Technology> SelectListByField(string fieldId)
         {
-            string sqlStr = string.Format("SELECT T.* FROM {0} AS T " +
-                "JOIN (SELECT technologyId FROM {1} WHERE fieldId = @FieldId) AS PT ON T.technologyId = PT.technologyId",
-                DBTableNames.Technology, DBTableNames.FieldTechnology);
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.FieldTechnology, [new("fieldId", fieldId)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter> { new SqlParameter("@FieldId", fieldId) };
+            List<Technology> technologies = new List<Technology>();
 
-            return DBGetModel.GetModelList(sqlStr, parameters, new TechnologyMapper());
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    technologies.Add(SelectOnly(row["technologyId"].ToString()));
+                }
+            }
+
+            return technologies;
         }
+
+        public static void InsertProjectTechnology(string projectId, List<Technology> technologies)
+        {
+            technologies = technologies.Distinct().ToList();
+
+            foreach (Technology technology in technologies)
+            {
+                DBExecution.InsertDynamic(DBTableNames.ProjectTechnology,
+                [
+                    new ("projectId", projectId),
+                    new ("technologyId", technology.TechnologyId)
+                ]);
+            }
+        }
+        public static void DeleteProjectTechnology(string projectId)
+        {
+            DBExecution.DeleteDynamic(DBTableNames.ProjectTechnology, [new("projectId", projectId)]);
+        }
+
         public static string GetListTechnology(string projectId)
         {
             List<Technology> technologies = SelectListByProject(projectId);
@@ -39,43 +84,23 @@ namespace ProjectManagement.DAOs
         }
         public static Dictionary<string, int> TopTechnology()
         {
-            string query = @"
-            SELECT TOP 5 t.name AS TechnologyName, COUNT(ft.technologyId) AS ProjectCount
-            FROM FieldTechnology ft
-            JOIN Technology t ON ft.technologyId = t.TechnologyId
-            GROUP BY t.name
-            ORDER BY ProjectCount DESC;";
+            string sqlStr = "SELECT * FROM FUNC_GetTopTechnology() ORDER BY ProjectCount DESC";
 
-            var results = new Dictionary<string, int>();
-            SqlConnection connection = DBConnection.GetConnection();
+            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, new List<SqlParameter>(), string.Empty);
+            Dictionary<string, int> result = new Dictionary<string, int>();
 
-            try
+            if (dataTable.Rows.Count > 0)
             {
-                connection.Open();
-
-                using (var command = new SqlCommand(query, connection))
-                using (var reader = command.ExecuteReader())
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    while (reader.Read())
-                    {
-                        string technologyName = reader["TechnologyName"].ToString();
-                        int projectCount = Convert.ToInt32(reader["ProjectCount"]);
+                    string technologyName = row["TechnologyName"].ToString();
+                    int projectCount = Convert.ToInt32(row["ProjectCount"]);
 
-                        results.Add(technologyName, projectCount);
-                    }
+                    result.Add(technologyName, projectCount);
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            finally
-            {
-                if (connection.State == System.Data.ConnectionState.Open)
-                    connection.Close();
-            }
 
-            return results;
+            return result;
         }
 
     }

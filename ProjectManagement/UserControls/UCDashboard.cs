@@ -61,7 +61,7 @@ namespace ProjectManagement
         public void SetInformation(Users user)
         {
             this.user = user;
-            this.favoriteProjects = ProjectDAO.GetFavoriteList(this.user.UserId);
+            this.favoriteProjects = ProjectDAO.SelectFavoriteList(this.user.UserId);
             gGradientButtonProjects.PerformClick();
             fProjectFilter.SetUpFilter(user);
             fProjectFilter.ListProject = this.currentList;
@@ -123,7 +123,7 @@ namespace ProjectManagement
                 projectLine.SetInformation(this.user, listProject[i], this.favoriteProjects.Contains(listProject[i].ProjectId));
                 projectLine.ProjectLineClicked += ProjectLine_Clicked;
                 projectLine.ProjectFavoriteClicked += ProjectFavorite_Clicked;
-                projectLine.NotificationJump += ProjectLine_NotificationJump;
+                // projectLine.NotificationJump += ProjectLine_NotificationJump;
                 uCProjectList.AddProject(projectLine);
             }
             uCProjectList.SetNumProject(listProject.Count, true);
@@ -226,7 +226,7 @@ namespace ProjectManagement
             if (projectLine != null)
             {
                 ProjectDetailsShow(projectLine);
-                uCProjectDetails.PerformNotificationClick(projectLine.GetNotification);
+                // uCProjectDetails.PerformNotificationClick(projectLine.GetNotification);
             }
         }
 

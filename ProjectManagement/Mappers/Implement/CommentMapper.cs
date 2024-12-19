@@ -16,5 +16,10 @@ namespace ProjectManagement.Mappers.Implement
             Comment comment = new Comment(commentId, content, createdAt, createdBy, taskId);
             return comment;
         }
+
+        public DataTable MapToTableType(List<Comment> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

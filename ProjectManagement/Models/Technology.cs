@@ -46,5 +46,22 @@ namespace ProjectManagement.Models
 
         #endregion
 
+        #region TO DISTINCT
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Technology tech)
+            {
+                return technologyId == tech.technologyId && name == tech.name;
+            }
+            return false;
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(technologyId, Name);
+        }
+
+        #endregion
+
     }
 }

@@ -23,5 +23,10 @@ namespace ProjectManagement.Mappers.Implement
             GiveUp giveUp = new GiveUp(projectId, userId, reason, createdAt, status);
             return giveUp;
         }
+
+        public DataTable MapToTableType(List<GiveUp> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

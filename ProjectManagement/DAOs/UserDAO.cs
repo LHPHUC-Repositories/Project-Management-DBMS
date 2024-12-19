@@ -22,8 +22,7 @@ namespace ProjectManagement.DAOs
 
         public static List<Users> SelectListByUserName(string userName, EUserRole role)
         {
-            string sqlStr = string.Format("SELECT * FROM {0} WHERE userName LIKE @UserNameSyntax AND role = @Role",
-                                DBTableNames.User);
+            string sqlStr = "EXEC PROC_SelectUsersByUserNameAndRole @UserNameSyntax, @Role";
 
             List<SqlParameter> parameters = new List<SqlParameter>
             {
@@ -31,31 +30,43 @@ namespace ProjectManagement.DAOs
                 new SqlParameter("@Role", EnumUtil.GetDisplayName(role))
             };
 
-            return DBGetModel.GetModelList(sqlStr, parameters, new UserMapper());
+            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                List<Users> usersList = new List<Users>();
+                UserMapper userMapper = new UserMapper();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    Users user = userMapper.MapRow(row);
+
+                    usersList.Add(user);
+                }
+                return usersList;
+            }
+            return new List<Users>();
         }
         public static Users SelectOnlyByID(string userId)
         {
-            string sqlStr = string.Format("SELECT * FROM {0} WHERE userId = @UserId", DBTableNames.User);
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.User, [new("userId", userId)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
+            if (dataTable != null && dataTable.Rows.Count > 0)
             {
-                new SqlParameter("@UserId", userId)
-            };
-
-            return DBGetModel.GetModel(sqlStr, parameters, new UserMapper());
+                UserMapper userMapper = new UserMapper();
+                return userMapper.MapRow(dataTable.Rows[0]);
+            }
+            return null;
         }
         public static Users SelectOnlyByEmailAndPassword(string email, string password)
         {
-            string sqlStr = string.Format("SELECT * FROM {0} WHERE email = @Email AND password = @Password",
-                                        DBTableNames.User);
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.User, [new("email", email), new ("password", password)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
+            if (dataTable != null && dataTable.Rows.Count > 0)
             {
-                new SqlParameter("@Email", email),
-                new SqlParameter("@Password", password)
-            };
-
-            return DBGetModel.GetModel(sqlStr, parameters, new UserMapper());
+                UserMapper userMapper = new UserMapper();
+                return userMapper.MapRow(dataTable.Rows[0]);
+            }
+            return null;
         }        
 
         #endregion
@@ -64,14 +75,8 @@ namespace ProjectManagement.DAOs
 
         public static List<string> SelectListId(EUserRole role)
         {
-            string sqlStr = $"SELECT userId FROM {DBTableNames.User} WHERE role = @Role";
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.User, [new("role", EnumUtil.GetDisplayName(role))]);
 
-            List<SqlParameter> parameters = new List<SqlParameter> 
-            { 
-                new SqlParameter("@Role", EnumUtil.GetDisplayName(role)) 
-            };
-
-            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
             List<string> list = new List<string>();
 
             foreach (DataRow row in dataTable.Rows)
@@ -88,27 +93,43 @@ namespace ProjectManagement.DAOs
 
         public static void Insert(Users user)
         {
-            DBExecution.Insert(user, DBTableNames.User);
+            DBExecution.InsertDynamic(DBTableNames.User,
+                [
+                    new("userId", user.UserId),
+                    new("userName", user.UserName),
+                    new("fullName", user.FullName),
+                    new("password", user.Password),
+                    new("email", user.Email),
+                    new("phoneNumber", user.PhoneNumber),
+                    new("dateOfBirth", user.DateOfBirth.ToString()),
+                    new("citizenCode", user.CitizenCode),
+                    new("university", user.University),
+                    new("faculty", user.Faculty),
+                    new("workCode", user.WorkCode),
+                    new("gender", EnumUtil.GetDisplayName(user.Gender)),
+                    new("avatar", user.Avatar),
+                    new("role", EnumUtil.GetDisplayName(user.Role)),
+                    new("joinAt", user.JoinAt.ToString())
+                ]);
         }
         public static void Update(Users user)
         {
-            DBExecution.Update(user, DBTableNames.User, "userId", user.UserId);
+            DBExecution.UpdateDynamic(DBTableNames.User, 
+                [
+                    new("userName", user.UserName), 
+                    new("fullName", user.FullName), 
+                    new("citizenCode", user.CitizenCode), 
+                    new("dateOfBirth", user.DateOfBirth.ToString()), 
+                    new("phoneNumber", user.PhoneNumber), 
+                    new("email", user.Email), 
+                    new("gender", EnumUtil.GetDisplayName(user.Gender))], 
+                [
+                    new("userId", user.UserId)
+                ]);
         }
-        public static bool CheckNonExist(string tableName, string field, string information)
-        {
-            string sqlStr = string.Format("SELECT 1 FROM {0} WHERE {1} = @Information", tableName, field);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
-            {
-                new SqlParameter("@Information", information)
-            };
-
-            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
-
-            return dataTable.Rows.Count == 0;
-        }
 
         #endregion
-
+        
     }
 }

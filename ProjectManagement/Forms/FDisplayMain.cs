@@ -8,8 +8,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ProjectManagement.DAOs;
+using ProjectManagement.Database;
 using ProjectManagement.Models;
 using ProjectManagement.Process;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace ProjectManagement
 {
@@ -18,6 +20,7 @@ namespace ProjectManagement
         private UCDisplayWelcome uCDisplayWelcome = new UCDisplayWelcome();
         private UCDisplayLogin uCDisplayLogin = new UCDisplayLogin();
         private UCDisplayRegister uCDisplayRegister = new UCDisplayRegister();
+        private DBConnection uDConnection = new DBConnection();
 
         public FDisplayMain()
         {
@@ -69,12 +72,14 @@ namespace ProjectManagement
 
         private void DWelcomeButtonLecture_Click(object sender, EventArgs e)
         {
+            uDConnection.SetDefaultConnection();
             Users user = UserDAO.SelectOnlyByID("242200001");
             SetNewDisplayUser(user);
         }
         private void DWelcomeButtonStudent_Click(object sender, EventArgs e)
         {
             Users user = UserDAO.SelectOnlyByID("243300002");
+            uDConnection.SetConnection(user.Email, user.Password);
             SetNewDisplayUser(user);
         }
         private void DWelcomeButtonRegister_Click(object sender, EventArgs e)
@@ -89,6 +94,7 @@ namespace ProjectManagement
         }
         private void DButtonLogOut_Click(object sender, EventArgs e)
         {
+            uDConnection.SetDefaultConnection();
             SetDisplay(uCDisplayWelcome);
         }
         private void DLoginButtonLogin_Click(object sender, EventArgs e)
@@ -106,11 +112,13 @@ namespace ProjectManagement
             else
             {
                 uCDisplayLogin.GTextBoxReminder.Text = string.Empty;
+                uDConnection.SetConnection(email, password);
                 SetNewDisplayUser(user);
             }
         }
         private void DLoginButtonBack_Click(object sender, EventArgs e)
         {
+            uDConnection.SetDefaultConnection();
             SetDisplay(uCDisplayWelcome);
         }
         private void DRegisterLoadLogin_Click(Object sender, EventArgs e)
@@ -120,6 +128,7 @@ namespace ProjectManagement
         }
         private void DRegisterBack_Click(object sender, EventArgs e)
         {
+            uDConnection.SetDefaultConnection();
             uCDisplayRegister.FlagCheck = true;
             uCDisplayRegister.RunCheckUserInfor();
             SetDisplay(uCDisplayWelcome);

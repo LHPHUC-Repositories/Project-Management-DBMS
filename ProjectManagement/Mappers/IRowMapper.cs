@@ -10,5 +10,7 @@ namespace ProjectManagement.Mappers
     public interface IRowMapper<T>
     {
         T MapRow(DataRow row);
+
+        DataTable MapToTableType(List<T> list);
     }
 }

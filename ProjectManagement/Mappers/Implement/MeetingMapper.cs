@@ -26,5 +26,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return meeting;
         }
+
+        public DataTable MapToTableType(List<Meeting> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

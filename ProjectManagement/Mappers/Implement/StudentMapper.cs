@@ -38,5 +38,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return student;
         }
+
+        public DataTable MapToTableType(List<Student> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

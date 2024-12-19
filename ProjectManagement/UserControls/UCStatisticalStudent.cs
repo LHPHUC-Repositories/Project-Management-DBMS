@@ -19,8 +19,8 @@ namespace ProjectManagement
     public partial class UCStatisticalStudent : UserControl
     {
         private Users user = new Users();
-        private List<Project> listProject;
-        private double avgContribute;        
+        private List<Project> listProject = new List<Project>();
+        private double avgContribute = 0.0D;        
 
         public UCStatisticalStudent()
         {
@@ -28,6 +28,7 @@ namespace ProjectManagement
         }
 
         #region FUNTIONS
+
         public double AvgContribute { get => this.avgContribute; }
         public void SetInformation(Users user)
         {
@@ -49,10 +50,10 @@ namespace ProjectManagement
             this.gChart.Datasets.Clear();
             foreach (Project project in this.listProject)
             {
-                listTasks = TaskDAO.SelectListTaskByStudent(this.user.UserId);
+                listTasks = TaskDAO.SelectListTaskByStudent(project.ProjectId, this.user.UserId);
 
-                double score = CalculationUtil.CalScorePeople(this.user.UserId, listTasks);
-                double contribute = CalculationUtil.CalCompletionRatePeople(this.user.UserId, listTasks);
+                double score = CalculationUtil.CalUtil(this.user.UserId, listTasks, "score");
+                double contribute = CalculationUtil.CalUtil(this.user.UserId, listTasks, "completionRate");
                 this.avgContribute += contribute;
                 this.gLineDataset.DataPoints.Add(project.ProjectId, score);
             }

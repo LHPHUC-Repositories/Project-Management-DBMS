@@ -12,6 +12,8 @@ using ProjectManagement.Enums;
 using ProjectManagement.Utils;
 using ProjectManagement.MetaData;
 using Microsoft.VisualBasic.ApplicationServices;
+using static TheArtOfDevHtmlRenderer.Adapters.RGraphicsPath;
+using System.Windows.Forms;
 
 namespace ProjectManagement.DAOs
 {
@@ -22,30 +24,38 @@ namespace ProjectManagement.DAOs
 
         public static Tasks SelectOnly(string taskId)
         {
-            string sqlStr = string.Format("SELECT * FROM {0} WHERE taskId = @TaskId", DBTableNames.Task);
-
-
-            List<SqlParameter> parameters = new List<SqlParameter>
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Task, [new("taskId", taskId)]);
+            if (dataTable != null && dataTable.Rows.Count > 0)
             {
-                new SqlParameter("@TaskId", taskId)
-            };
+                TaskMapper taskMapper = new TaskMapper();
+                return taskMapper.MapRow(dataTable.Rows[0]);
+            }
 
-            return DBGetModel.GetModel(sqlStr, parameters, new TaskMapper());
+            return null;
         }
         public static List<Tasks> SelectListByTeam(string teamId)
         {
-            string sqlStr = string.Format("SELECT {0}.* FROM {0} INNER JOIN {1} ON {0}.projectId = {1}.projectId " +
-                                            "WHERE teamId = @TeamId AND status = @Accepted " + "" +
-                                            "ORDER BY {0}.createdAt DESC",
-                                            DBTableNames.Task, DBTableNames.Team);
+            DataTable getProject = DBExecution.GetDynamic(DBTableNames.Team, [new("teamId", teamId)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
+            if (getProject != null && getProject.Rows.Count > 0)
             {
-                new SqlParameter("@TeamId", teamId),
-                new SqlParameter("@Accepted", EnumUtil.GetDisplayName(ETeamStatus.ACCEPTED))
-            };
+                DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Task, [new("projectId", getProject.Rows[0]["projectId"].ToString())]);
 
-            return DBGetModel.GetModelList(sqlStr, parameters, new TaskMapper());
+                if (dataTable != null && dataTable.Rows.Count > 0)
+                {
+                    List<Tasks> tasksList = new List<Tasks>();
+                    TaskMapper taskMapper = new TaskMapper();
+
+                    foreach (DataRow row in dataTable.Rows)
+                    {
+                        Tasks task = taskMapper.MapRow(row);
+
+                        tasksList.Add(task);
+                    }
+                    return tasksList;
+                }
+            }
+            return new List<Tasks>();
         }
         public static List<TaskMeta> SelectListTaskMeta(string userId, string teamId, string projectId)
         {
@@ -60,42 +70,67 @@ namespace ProjectManagement.DAOs
 
             return taskMetas;
         }
-        public static List<Tasks> SelectListTaskByStudent(string studentId)
+        public static List<Tasks> SelectListTaskByStudent(string projectId, string studentId)
         {
-            string sqlStr = string.Format("SELECT {0}.* FROM {0} INNER JOIN {1} ON {0}.taskId = {1}.taskId " +
-                                            "WHERE projectId = @projectId AND studentId = @studentId ORDER BY {0}.createdAt DESC",
-                                            DBTableNames.Task, DBTableNames.TaskStudent);
+            DataTable getTask = DBExecution.GetDynamic(DBTableNames.TaskStudent, [new("studentId", studentId)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
+            if (getTask != null)
             {
-                new SqlParameter("@studentId", studentId)
-            };
+                List<string> taskIds = new List<string>();
+                foreach (DataRow row in getTask.Rows)
+                {
+                    taskIds.Add(row["taskId"].ToString());
+                }
 
-            return DBGetModel.GetModelList(sqlStr, parameters, new TaskMapper());
+                List<Tasks> tasks = SelectListTaskByProject(projectId);
+
+                List<Tasks> tasksList = tasks.Where(t => taskIds.Contains(t.TaskId)).ToList();
+
+                return tasksList;
+            }
+
+            return new List<Tasks>();
+        }
+        public static List<Tasks> SelectListTaskByProject(string projectId)
+        {
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Task, [new("projectId", projectId)]);
+
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                List<Tasks> tasksList = new List<Tasks>();
+                TaskMapper taskMapper = new TaskMapper();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    Tasks task = taskMapper.MapRow(row);
+                    tasksList.Add(task);
+                }
+                return tasksList.OrderByDescending(t => t.CreatedAt).ToList();
+            }
+            return new List<Tasks>();
         }
         private static List<string> SelectFavoriteList(string userId, string projectId)
         {
-            string sqlStr = string.Format("SELECT FT.taskId FROM {0} AS FT " +
-                "JOIN (SELECT taskId FROM {1} WHERE projectId = @ProjectId) AS T " +
-                "ON FT.taskId = T.taskId " +
-                "WHERE userId = @UserId", DBTableNames.FavoriteTask, DBTableNames.Task);
+            DataTable getTask = DBExecution.GetDynamic(DBTableNames.FavoriteTask, [new("userId", userId)]);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
+            if (getTask != null)
             {
-                new SqlParameter("@ProjectId", projectId),
-                new SqlParameter("@UserId", userId)
-            };
+                List<string> taskIds = new List<string>();
+                foreach (DataRow row in getTask.Rows)
+                {
+                    taskIds.Add(row["taskId"].ToString());
+                }
 
-            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
+                List<string> tasks = SelectListTaskByProject(projectId).Select(t => t.TaskId).ToList();
 
-            List<string> list = new List<string>();
-            foreach (DataRow row in  dataTable.Rows)
-            {
-                list.Add(row["taskId"].ToString());
+                List<string> tasksList = tasks.Where(t => taskIds.Contains(t)).ToList();
+
+                return tasksList;
             }
 
-            return list;
+            return new List<string>();
         }
+
 
         #endregion
 
@@ -103,46 +138,94 @@ namespace ProjectManagement.DAOs
 
         public static void Insert(Tasks task)
         {
-            DBExecution.Insert(task, DBTableNames.Task, "Create task");
+            DBExecution.InsertDynamic(DBTableNames.Task,
+                [
+                    new("taskId", task.TaskId),
+                    new("startAt", task.StartAt.ToString()),
+                    new("endAt", task.EndAt.ToString()),
+                    new("title", task.Title),
+                    new("description", task.Description),
+                    new("progress", task.Progress.ToString()),
+                    new("priority", EnumUtil.GetDisplayName(task.Priority)),
+                    new("createdAt", task.CreatedAt.ToString()),
+                    new("createdBy", task.CreatedBy),
+                    new("projectId", task.ProjectId),
+                ]);
         }
         public static void InsertAssignStudent(string taskId, string studentId)
         {
-            string sqlStr = string.Format("INSERT INTO {0} (taskId, studentId) VALUES (@TaskId, @StudentId)", DBTableNames.TaskStudent);
+            string sqlStr = "EXEC PROC_InsertAssignStudent @taskId, @studentId";
+
             List<SqlParameter> parameters = new List<SqlParameter>
             {
-                new SqlParameter("@TaskId", taskId),
-                new SqlParameter("StudentId", studentId)
+                new SqlParameter("@taskId", taskId),
+                new SqlParameter("@studentId", studentId)
             };
+
             DBExecution.SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
         }
 
+        public static void DeleteTaskStudentByTaskId(string taskId)
+        {
+            DBExecution.DeleteDynamic(DBTableNames.TaskStudent, [new("taskId", taskId)]);
+        }
+        public static void DeleteFavoriteTaskByTaskId(string taskId)
+        {
+            DBExecution.DeleteDynamic(DBTableNames.FavoriteTask, [new("taskId", taskId)]);
+        }
         public static void Delete(string taskId)
         {
-            DBExecution.Delete(DBTableNames.Evaluation, "taskId", taskId);
-            DBExecution.Delete(DBTableNames.Comment, "taskId", taskId);
+            string sqlStr = "EXEC PROC_DeleteTaskCascade @taskId";
 
-            DBExecution.Delete(DBTableNames.TaskStudent, "taskId", taskId);
-            DBExecution.Delete(DBTableNames.FavoriteTask, "taskId", taskId);
+            List<SqlParameter> parameters = new List<SqlParameter>
+            {
+                new SqlParameter("@taskId", taskId),
+            };
 
-            DBExecution.Delete(DBTableNames.Task, "taskId", taskId);
+            DBExecution.SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
         }
+        
         public static void DeleteFollowProject(string projectId)
         {
-            string sqlStr = string.Format("SELECT taskId FROM {0} WHERE projectId = @ProjectId", DBTableNames.Task);
+            List<Tasks> listTasks = SelectListTaskByProject(projectId);
 
-            List<SqlParameter> parameters = new List<SqlParameter> { new SqlParameter("@ProjectId", projectId) };
-
-            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
-
-            foreach (DataRow row in dataTable.Rows)
+            foreach (Tasks task in listTasks)
             {
-                Delete(row["taskId"].ToString());
+                Delete(task.TaskId);
             }
         }
 
         public static void Update(Tasks task)
         {
-            DBExecution.Update(task, DBTableNames.Task, "taskId", task.TaskId);
+            DBExecution.UpdateDynamic(DBTableNames.Task,
+                [
+                    new("title", task.Title),
+                    new("description", task.Description),
+                    new("startAt", task.StartAt.ToString()),
+                    new("endAt", task.EndAt.ToString()),
+                    new("progress", task.Progress.ToString()),
+                    new("priority", EnumUtil.GetDisplayName(task.Priority)),
+                ],
+                [
+                    new("taskId", task.TaskId)
+                ]);
+        }
+       
+        public static void DeleteFavoritesTask(string userId, string taskId)
+        {
+            DBExecution.DeleteDynamic(DBTableNames.FavoriteTask, 
+                [
+                    new("userId", userId),
+                    new("taskId", taskId)
+                ]);
+        }
+        public static void InsertFavoritesTask(string userId, string taskId)
+        {
+            DBExecution.InsertDynamic(DBTableNames.FavoriteTask,
+            [
+                new("userId", userId),
+                new("taskId", taskId)
+            ]);
         }
         public static void UpdateFavorite(string userId, string taskId, bool isFavorite)
         {
@@ -150,20 +233,12 @@ namespace ProjectManagement.DAOs
 
             if (isFavorite == false)
             {
-                sqlStr = string.Format("DELETE FROM {0} WHERE userId = @UserId AND taskId = @TaskId", DBTableNames.FavoriteTask);
+                DeleteFavoritesTask(userId, taskId);
             }
             else
             {
-                sqlStr = string.Format("INSERT INTO {0} (userId, taskId) VALUES (@UserId, @TaskId)", DBTableNames.FavoriteTask);
+                InsertFavoritesTask(userId, taskId);
             }
-
-            List<SqlParameter> parameters = new List<SqlParameter>
-            {
-                new SqlParameter("@UserId", userId),
-                new SqlParameter("@TaskId", taskId)
-            };
-
-            DBExecution.SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
         }
 
         #endregion
@@ -172,8 +247,7 @@ namespace ProjectManagement.DAOs
 
         private static List<Tasks> SearchTaskTitle(string projectId, string title)
         {
-            string sqlStr = string.Format("SELECT * FROM {0} WHERE projectId = @ProjectId AND title LIKE @TitleSyntax ORDER BY createdAt DESC",
-                                DBTableNames.Task);
+            string sqlStr = "EXEC PROC_SearchTaskByTitle @ProjectId, @TitleSyntax";
 
             List<SqlParameter> parameters = new List<SqlParameter>
             {
@@ -181,7 +255,21 @@ namespace ProjectManagement.DAOs
                 new SqlParameter("@TitleSyntax", title + "%")
             };
 
-            return DBGetModel.GetModelList(sqlStr, parameters, new TaskMapper());
+            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                List<Tasks> tasksList = new List<Tasks>();
+                TaskMapper taskMapper = new TaskMapper();
+
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    Tasks task = taskMapper.MapRow(row);
+
+                    tasksList.Add(task);
+                }
+                return tasksList;
+            }
+            return new List<Tasks>();
         }
         public static List<TaskMeta> SearchTaskMetaTitle(string userId, string projectId, string title)
         {
@@ -201,19 +289,39 @@ namespace ProjectManagement.DAOs
 
         #region CHECK INFORMATION
 
-        public static bool CheckIsFavorite(string userId, string taskId)
+        public static bool CheckIsFavoriteTask(string userId, string taskId)
         {
-            string sqlStr = string.Format("SELECT 1 FROM {0} WHERE userId = @UserId AND taskId = @TaskId", DBTableNames.FavoriteTask);
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.FavoriteTask,
+                [
+                    new("userId", userId),
+                    new("taskId", taskId)
+                ]);
 
-            List<SqlParameter> parameters = new List<SqlParameter>
-            {
-                new SqlParameter("@UserId", userId),
-                new SqlParameter("@TaskId", taskId)
-            };
+            return dataTable != null && dataTable.Rows.Count > 0;
+        }
 
+        #endregion
+
+        #region GET MEMBERS
+
+        public static List<Member> GetMembersByTaskId(string taskId)
+        {
+            string sqlStr = $"SELECT studentId FROM {DBTableNames.TaskStudent} WHERE taskId = @TaskId";
+            List<SqlParameter> parameters = new List<SqlParameter> { new SqlParameter("@TaskId", taskId) };
             DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
 
-            return dataTable.Rows.Count > 0;
+            List<Member> list = new List<Member>();
+
+            foreach (DataRow row in dataTable.Rows)
+            {
+                Users student = UserDAO.SelectOnlyByID(row["studentId"].ToString());
+                ETeamRole role = default;
+                DateTime joinAt = DateTime.Now;
+
+                list.Add(new Member(student, role, joinAt));
+            }
+
+            return list.OrderBy(m => m.Role).ToList();
         }
 
         #endregion

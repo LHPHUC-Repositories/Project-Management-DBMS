@@ -19,7 +19,7 @@ namespace ProjectManagement
 {
     public partial class UCTaskEvaluateDetails : UserControl
     {
-        
+
         private Tasks task = new Tasks();
         private Users student = new Users();
         private Users host = new Users();
@@ -89,7 +89,7 @@ namespace ProjectManagement
         }
         private void SetTextBoxEditState(Guna2TextBox textBox, bool flag)
         {
-            if (flag) 
+            if (flag)
             {
                 textBox.FillColor = Color.FromArgb(242, 245, 244);
                 textBox.BorderThickness = 1;
@@ -127,12 +127,12 @@ namespace ProjectManagement
         private bool CheckInformationValid()
         {
             WinformControlUtil.RunCheckDataValid(evaluation.CheckContent() || flagCheck || host.Role == EUserRole.STUDENT, erpEvaluation, gTextBoxEvaluation, "Comment be empty");
-            UpdateContribute(); 
+            UpdateContribute();
             UpdateScores();
             int contribution;
             float scores;
             return (evaluation.CheckContent() || flagCheck || host.Role == EUserRole.STUDENT)
-                && (int.TryParse(gTextBoxCompleted.Text, out contribution) && task.CheckProgress()) 
+                && (int.TryParse(gTextBoxCompleted.Text, out contribution) && task.CheckProgress())
                 && (float.TryParse(gTextBoxScores.Text, out scores) && evaluation.CheckScore());
         }
 
@@ -145,7 +145,7 @@ namespace ProjectManagement
             this.flagCheck = false;
             if (CheckInformationValid())
             {
-                this.evaluation = new Evaluation(evaluation.EvaluationId, gTextBoxEvaluation.Text, double.Parse(gTextBoxCompleted.Text), 
+                this.evaluation = new Evaluation(evaluation.EvaluationId, gTextBoxEvaluation.Text, double.Parse(gTextBoxCompleted.Text),
                     double.Parse(gTextBoxScores.Text), true, DateTime.Now, evaluation.CreatedBy, this.student.UserId, evaluation.TaskId);
 
                 EvaluationDAO.Update(evaluation);

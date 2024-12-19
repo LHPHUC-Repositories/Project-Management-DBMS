@@ -95,7 +95,7 @@ namespace ProjectManagement
                                                     "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
             if (result == DialogResult.OK)
             {
-                NotificationDAO.Delete(user.UserId, notificationMeta.Notification.NotificationId);
+                NotificationDAO.Delete(notificationMeta.Notification.NotificationId);
                 OnNotificationDeleteClicked(EventArgs.Empty);
             }
         }

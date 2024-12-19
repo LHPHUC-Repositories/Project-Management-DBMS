@@ -34,7 +34,7 @@ namespace ProjectManagement
             this.listTasks = TaskDAO.SelectListByTeam(this.team.TeamId);
             UpdateMembers();
             UpdateChart();
-            this.gProgressBar.Value = CalculationUtil.CalStatisticalProject(this.listTasks);
+            this.gProgressBar.Value = CalculationUtil.CalAvgProgress(this.listTasks);
             this.lblTotalProgress.Text = this.gProgressBar.Value.ToString() + "%";
         }
 
@@ -49,8 +49,8 @@ namespace ProjectManagement
                 line.SetBackGroundColor(SystemColors.ButtonFace);
                 line.SetSize(new Size(580, 63));
                 line.SetDeleteMode(false);
-                int completion = (int)CalculationUtil.CalCompletionRatePeople(this.members[i].User.UserId, this.listTasks);
-                int score = (int)CalculationUtil.CalScorePeople(this.members[i].User.UserId, this.listTasks);
+                int completion = (int)CalculationUtil.CalUtil(this.members[i].User.UserId, this.listTasks, "completionRate");
+                int score = (int)CalculationUtil.CalUtil(this.members[i].User.UserId, this.listTasks, "score");
                 line.SetStatisticalMode(completion, score);
                 flpMemberStatistical.Controls.Add(line);
             }

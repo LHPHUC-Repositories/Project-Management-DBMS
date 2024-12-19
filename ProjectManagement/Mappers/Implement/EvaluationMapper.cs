@@ -27,5 +27,37 @@ namespace ProjectManagement.Mappers.Implement
 
             return evaluation;
         }
+
+        public DataTable MapToTableType(List<Evaluation> list)
+        {
+            DataTable evaluationTable = new DataTable();
+
+            evaluationTable.Columns.Add("evaluationId", typeof(string));
+            evaluationTable.Columns.Add("content", typeof(string));
+            evaluationTable.Columns.Add("completionRate", typeof(float));
+            evaluationTable.Columns.Add("score", typeof(float));
+            evaluationTable.Columns.Add("evaluated", typeof(bool));
+            evaluationTable.Columns.Add("createdAt", typeof(DateTime));
+            evaluationTable.Columns.Add("createdBy", typeof(string));
+            evaluationTable.Columns.Add("studentId", typeof(string));
+            evaluationTable.Columns.Add("taskId", typeof(string));
+
+            foreach (var evaluation in list)
+            {
+                evaluationTable.Rows.Add(
+                    evaluation.EvaluationId,
+                    evaluation.Content,
+                    evaluation.CompletionRate,
+                    evaluation.Score,
+                    evaluation.Evaluated,
+                    evaluation.CreatedAt,
+                    evaluation.CreatedBy,
+                    evaluation.StudentId,
+                    evaluation.TaskId
+                );
+            }
+
+            return evaluationTable;
+        }
     }
 }

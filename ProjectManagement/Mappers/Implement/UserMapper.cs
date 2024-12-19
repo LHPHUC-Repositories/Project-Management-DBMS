@@ -31,5 +31,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return user;
         }
+
+        public DataTable MapToTableType(List<Users> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

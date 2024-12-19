@@ -8,6 +8,7 @@ using ProjectManagement.Database;
 using ProjectManagement.Models;
 using ProjectManagement.Mappers.Implement;
 using System.Data.SqlClient;
+using ProjectManagement.Utils;
 
 namespace ProjectManagement.DAOs
 {
@@ -18,11 +19,34 @@ namespace ProjectManagement.DAOs
 
         public static Meeting SelectOnly(string meetingId)
         {
-            return DBGetModel.GetModel(DBTableNames.Meeting, "meetingId", meetingId, new MeetingMapper());
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Meeting, [new("meetingId", meetingId)]);
+
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                MeetingMapper meetingMapper = new MeetingMapper();
+                return meetingMapper.MapRow(dataTable.Rows[0]);
+            }
+
+            return null;
+
         }
         public static List<Meeting> SelectByProject(string projectId)
         {
-            return DBGetModel.GetModelList(DBTableNames.Meeting, "projectId", projectId, new MeetingMapper());
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Meeting, [new("projectId", projectId)]);
+
+            List<Meeting> listMeetings = new List<Meeting>();
+
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    Meeting meeting = DBGetModel.GetModelFromDataRow(row, new MeetingMapper());
+                    listMeetings.Add(meeting);
+                }
+            }
+
+            return listMeetings;
+
         }
 
         #endregion
@@ -31,15 +55,44 @@ namespace ProjectManagement.DAOs
 
         public static void Insert(Meeting meeting)
         {
-            DBExecution.Insert(meeting, DBTableNames.Meeting);
+            DBExecution.InsertDynamic(DBTableNames.Meeting,
+           [
+               new("meetingId", meeting.MeetingId),
+               new("title", meeting.Title),
+               new("description", meeting.Description),
+               new("startAt", meeting.StartAt.ToString()),
+               new("location", meeting.Location),
+               new("link", meeting.Link),
+               new("createdAt", meeting.CreatedAt.ToString()),
+               new("createdBy", meeting.CreatedBy),
+               new("projectId", meeting.ProjectId),
+
+           ]);
+
         }
         public static void Delete(Meeting meeting)
         {
-            DBExecution.Delete(DBTableNames.Meeting, "meetingId", meeting.MeetingId);
+            DBExecution.DeleteDynamic(DBTableNames.Meeting, [new("meetingId", meeting.MeetingId)]);
         }
+
         public static void Update(Meeting meeting)
         {
-            DBExecution.Update(meeting, DBTableNames.Meeting, "meetingId", meeting.MeetingId);
+            DBExecution.UpdateDynamic(DBTableNames.Meeting,
+               [
+                   new("meetingId", meeting.MeetingId),
+                   new("title", meeting.Title),
+                   new("description", meeting.Description),
+                   new("startAt", meeting.StartAt.ToString()),
+                   new("location", meeting.Location),
+                   new("link", meeting.Link),
+                   new("createdAt", meeting.CreatedAt.ToString()),
+                   new("createdBy", meeting.CreatedBy),
+                   new("projectId", meeting.ProjectId),
+               ],
+               [
+                   new("meetingId", meeting.MeetingId)
+               ]);
+
         }
 
         #endregion

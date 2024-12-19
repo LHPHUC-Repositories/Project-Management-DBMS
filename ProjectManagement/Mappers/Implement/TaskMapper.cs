@@ -28,5 +28,40 @@ namespace ProjectManagement.Mappers.Implement
             Tasks task = new Tasks(taskId, startAt, endAt, title, description, progress, priority, createdAt, createdBy, projectId);
             return task;
         }
+
+        public DataTable MapToTableType(List<Tasks> list)
+        {
+            DataTable taskTable = new DataTable();
+
+            taskTable.Columns.Add("taskId", typeof(string));
+            taskTable.Columns.Add("startAt", typeof(DateTime));
+            taskTable.Columns.Add("endAt", typeof(DateTime));
+            taskTable.Columns.Add("title", typeof(string));
+            taskTable.Columns.Add("description", typeof(string));
+            taskTable.Columns.Add("progress", typeof(float));
+            taskTable.Columns.Add("priority", typeof(string));
+            taskTable.Columns.Add("createdAt", typeof(DateTime));
+            taskTable.Columns.Add("createdBy", typeof(string));
+            taskTable.Columns.Add("projectId", typeof(string));
+
+            foreach (var task in list)
+            {
+                taskTable.Rows.Add(
+                    task.TaskId,
+                    task.StartAt,
+                    task.EndAt,
+                    task.Title,
+                    task.Description,
+                    task.Progress,
+                    task.Priority,
+                    task.CreatedAt,
+                    task.CreatedBy,
+                    task.ProjectId
+                );
+            }
+
+            return taskTable;
+        }
+
     }
 }

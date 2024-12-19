@@ -19,5 +19,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return technology;
         }
+
+        public DataTable MapToTableType(List<Technology> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -16,30 +16,57 @@ namespace ProjectManagement.DAOs
 {
     internal class GiveUpDAO : DBConnection
     {
+        #region CHECK INFORMATIONS
+
+        public static bool CheckIsNotEmpty(string input, string fieldName)
+        {
+            string sqlStr = "SELECT * FROM dbo.FUNC_IsNotEmpty(@Input, @FieldName)";
+            List<SqlParameter> parameters = new List<SqlParameter>
+            {
+            new SqlParameter("@Input", input),
+            new SqlParameter("@FieldName", fieldName)
+            };
+            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, parameters, string.Empty);
+            return dataTable.Rows.Count > 0 && Convert.ToBoolean(dataTable.Rows[0]["IsValid"]);
+        }
+
+        #endregion
+
         public static GiveUp SelectFollowProject(string projectId)
         {
-            return DBGetModel.GetModel(DBTableNames.GiveUp, "projectId", projectId, new GiveUpMapper());
-
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.GiveUp, [new("projectId", projectId)]);
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                GiveUpMapper giveUpMapper = new GiveUpMapper();
+                return giveUpMapper.MapRow(dataTable.Rows[0]);
+            }
+            return null;
         }
         public static void UpdateStatus(string projectId, EGiveUpStatus newStatus, EGiveUpStatus oldStatus)
         {
-            string sqlStr = string.Format("UPDATE {0} SET status = @NewStatus WHERE projectId = @ProjectId and status = @OldStatus",
-                DBTableNames.GiveUp);
-            List<SqlParameter> parameters = new List<SqlParameter>
-            {
-                new SqlParameter("@NewStatus", EnumUtil.GetDisplayName(newStatus)),
-                new SqlParameter("@ProjectId", projectId),
-                new SqlParameter("@OldStatus", EnumUtil.GetDisplayName(oldStatus))
-            };
-            DBExecution.SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
+            DBExecution.UpdateDynamic(DBTableNames.Project,
+            [
+                new ("status", EnumUtil.GetDisplayName(newStatus))
+            ],
+            [
+                new ("projectId", projectId),
+                new("status", EnumUtil.GetDisplayName(oldStatus))
+            ]);
         }
         public static void Insert(GiveUp giveUp)
         {
-            DBExecution.Insert(giveUp, DBTableNames.GiveUp);
+            DBExecution.InsertDynamic(DBTableNames.GiveUp, 
+                [
+                    new("projectId", giveUp.ProjectId),
+                    new("userId", giveUp.UserId),
+                    new("reason", giveUp.Reason),
+                    new("createdAt", giveUp.CreatedAt.ToString()),
+                    new("status", EnumUtil.GetDisplayName(giveUp.Status))
+                ]);
         }
         public static void Delete(string projectId)
         {
-            DBExecution.Delete(DBTableNames.GiveUp, "projectId", projectId);
+            DBExecution.DeleteDynamic(DBTableNames.GiveUp, [new("projectId", projectId)]);
         }
     }
 }

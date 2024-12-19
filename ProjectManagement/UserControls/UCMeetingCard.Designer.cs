@@ -41,8 +41,6 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges10 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             gShadowPanelTeam = new Guna.UI2.WinForms.Guna2ShadowPanel();
             lblSeeMore = new Label();
-            lblTimeEnd = new Label();
-            lblEnd = new Label();
             lblTimeStart = new Label();
             lblStart = new Label();
             gTextBoxLocation = new Guna.UI2.WinForms.Guna2TextBox();
@@ -62,8 +60,6 @@
             // 
             gShadowPanelTeam.BackColor = Color.Transparent;
             gShadowPanelTeam.Controls.Add(lblSeeMore);
-            gShadowPanelTeam.Controls.Add(lblTimeEnd);
-            gShadowPanelTeam.Controls.Add(lblEnd);
             gShadowPanelTeam.Controls.Add(lblTimeStart);
             gShadowPanelTeam.Controls.Add(lblStart);
             gShadowPanelTeam.Controls.Add(gTextBoxLocation);
@@ -94,29 +90,6 @@
             lblSeeMore.Text = "See more";
             lblSeeMore.Click += lblSeeMore_Click;
             // 
-            // lblTimeEnd
-            // 
-            lblTimeEnd.AutoSize = true;
-            lblTimeEnd.BackColor = Color.Transparent;
-            lblTimeEnd.Font = new Font("Century Gothic", 9F, FontStyle.Italic, GraphicsUnit.Point, 0);
-            lblTimeEnd.Location = new Point(256, 161);
-            lblTimeEnd.Name = "lblTimeEnd";
-            lblTimeEnd.Size = new Size(176, 18);
-            lblTimeEnd.TabIndex = 84;
-            lblTimeEnd.Text = "08/05/2024 11:00:00 AM";
-            // 
-            // lblEnd
-            // 
-            lblEnd.AutoSize = true;
-            lblEnd.BackColor = Color.Transparent;
-            lblEnd.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblEnd.ForeColor = Color.FromArgb(74, 97, 94);
-            lblEnd.Location = new Point(201, 159);
-            lblEnd.Name = "lblEnd";
-            lblEnd.Size = new Size(43, 20);
-            lblEnd.TabIndex = 83;
-            lblEnd.Text = "End :";
-            // 
             // lblTimeStart
             // 
             lblTimeStart.AutoSize = true;
@@ -136,7 +109,7 @@
             lblStart.ForeColor = Color.FromArgb(74, 97, 94);
             lblStart.Location = new Point(201, 136);
             lblStart.Name = "lblStart";
-            lblStart.Size = new Size(49, 20);
+            lblStart.Size = new Size(64, 20);
             lblStart.TabIndex = 81;
             lblStart.Text = "StartAt :";
             // 
@@ -277,7 +250,7 @@
             lblCre.ForeColor = Color.Gray;
             lblCre.Location = new Point(210, 58);
             lblCre.Name = "lblCre";
-            lblCre.Size = new Size(345, 20);
+            lblCre.Size = new Size(360, 20);
             lblCre.TabIndex = 39;
             lblCre.Text = "CreatedAt by Anonymous at 03/05/2024 10:30:45 AM";
             // 
@@ -341,8 +314,6 @@
         private Guna.UI2.WinForms.Guna2TextBox gTextBoxDay;
         private Guna.UI2.WinForms.Guna2TextBox gTextBoxMonth;
         private Guna.UI2.WinForms.Guna2TextBox gTextBoxLocation;
-        private Label lblTimeEnd;
-        private Label lblEnd;
         private Label lblTimeStart;
         private Label lblStart;
         private Label lblSeeMore;

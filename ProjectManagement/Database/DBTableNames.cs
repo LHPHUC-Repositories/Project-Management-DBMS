@@ -30,6 +30,6 @@ namespace ProjectManagement.Database
         public static string FavoriteProject = "FavoriteProject";
         public static string FavoriteTask = "FavoriteTask";
         public static string FavoriteNotification = "FavoriteNotification";
-        public static string FieldTechnology = "FieldTechnology ";
+        public static string FieldTechnology = "FieldTechnology";
     }
 }

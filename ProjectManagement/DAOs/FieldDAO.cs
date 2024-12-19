@@ -3,6 +3,7 @@ using ProjectManagement.Mappers.Implement;
 using ProjectManagement.Models;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -14,52 +15,57 @@ namespace ProjectManagement.DAOs
     {
         public static Field SelectOnlyById(string fieldId)
         {
-            return DBGetModel.GetModel(DBTableNames.Field, "fieldId", fieldId, new FieldMapper());
+            DataTable dataTable = DBExecution.GetDynamic(DBTableNames.Field, [new("fieldId", fieldId)]);
+
+            if (dataTable != null && dataTable.Rows.Count > 0)
+            {
+                FieldMapper fieldMapper = new FieldMapper();
+                return fieldMapper.MapRow(dataTable.Rows[0]);
+            }
+
+            return null;
         }
         public static List<Field> SelectList()
         {
-            string sqlStr = string.Format("SELECT * FROM {0}", DBTableNames.Field);
+            string sqlStr = $"SELECT * FROM {DBTableNames.Field}";
 
-            return DBGetModel.GetModelList(sqlStr, new List<SqlParameter>(), new FieldMapper());
-        }
-        public static Dictionary<string, int> TopField()
-        {
-            string query = @"
-            SELECT TOP 5 f.name AS FieldName, COUNT(p.FieldId) AS ProjectCount
-            FROM Project p
-            JOIN Field f ON p.FieldId = f.fieldId
-            GROUP BY f.name
-            ORDER BY ProjectCount DESC;";
-            var results = new Dictionary<string, int>();
-            SqlConnection connection = DBConnection.GetConnection();
+            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, new List<SqlParameter>(), string.Empty);
 
-            try
+            List<Field> fields = new List<Field>();
+
+            if (dataTable != null && dataTable.Rows.Count > 0)
             {
-                connection.Open();
+                FieldMapper fieldMapper = new FieldMapper();
 
-                using (var command = new SqlCommand(query, connection))
-                using (var reader = command.ExecuteReader())
+                foreach (DataRow row in dataTable.Rows)
                 {
-                    while (reader.Read())
-                    {
-                        string fieldName = reader["FieldName"].ToString();
-                        int projectCount = Convert.ToInt32(reader["ProjectCount"]);
-
-                        results.Add(fieldName, projectCount);
-                    }
+                    Field field = fieldMapper.MapRow(row);
+                    fields.Add(field);
                 }
             }
-            catch (Exception ex)
+
+            return fields;
+        }
+
+        public static Dictionary<string, int> TopField()
+        {
+            string sqlStr = "SELECT * FROM FUNC_GetTopField() ORDER BY ProjectCount DESC";
+
+            DataTable dataTable = DBExecution.SQLExecuteQuery(sqlStr, new List<SqlParameter>(), string.Empty);
+            Dictionary<string, int> result = new Dictionary<string, int>();
+
+            if (dataTable.Rows.Count > 0)
             {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            finally
-            {
-                if (connection.State == System.Data.ConnectionState.Open)
-                    connection.Close();
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    string fieldName = row["FieldName"].ToString();
+                    int projectCount = Convert.ToInt32(row["ProjectCount"]);
+
+                    result.Add(fieldName, projectCount);
+                }
             }
 
-            return results;
+            return result;
         }
     }
 }

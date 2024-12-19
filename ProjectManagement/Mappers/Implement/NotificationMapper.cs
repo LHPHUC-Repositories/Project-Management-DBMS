@@ -20,5 +20,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return notification;
         }
+
+        public DataTable MapToTableType(List<Notification> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

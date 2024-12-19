@@ -8,13 +8,14 @@ namespace ProjectManagement.Database
 {
     internal class DBExecution
     {
+        private static DBConnection uDConnection = new DBConnection();
 
         #region SQL EXECUTION QUERY
 
         public static DataTable SQLExecuteQuery(string sqlStr, List<SqlParameter> parameters, string typeExecution)
         {
+            SqlConnection connection = uDConnection.GetConnection();
             DataTable dataTable = new DataTable();
-            SqlConnection connection = DBConnection.GetConnection();
 
             try
             {
@@ -56,7 +57,7 @@ namespace ProjectManagement.Database
 
         public static void SQLExecuteNonQuery(string sqlStr, List<SqlParameter> parameters, string typeExecution)
         {
-            SqlConnection connection = DBConnection.GetConnection();
+            SqlConnection connection = uDConnection.GetConnection();
 
             try
             {
@@ -83,83 +84,6 @@ namespace ProjectManagement.Database
             {
                 connection.Close();
             }
-        }
-
-        #endregion
-
-        #region CALL STORED PROCEDURE
-
-        public static void ExecuteStoredProcedure(string procedureName, List<SqlParameter> parameters, string typeExecution)
-        {
-            SqlConnection connection = DBConnection.GetConnection();
-
-            try
-            {
-                connection.Open();
-
-                using (SqlCommand cmd = new SqlCommand(procedureName, connection))
-                {
-                    cmd.CommandType = CommandType.StoredProcedure;
-
-                    foreach (var param in parameters)
-                    {
-                        cmd.Parameters.Add(param);
-                    }
-
-                    if (cmd.ExecuteNonQuery() > 0)
-                    {
-                        WinformControlUtil.ShowMessage("Notification", typeExecution + " successfully");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                WinformControlUtil.ShowMessage("Notification", typeExecution + " failed: " + ex.Message);
-            }
-            finally
-            {
-                connection.Close();
-            }
-        }
-
-        #endregion
-
-        #region CALL FUNCTION
-
-        public static DataTable ExecuteFunction(string functionName, List<SqlParameter> parameters)
-        {
-            DataTable resultTable = new DataTable();
-            SqlConnection connection = DBConnection.GetConnection();
-
-            try
-            {
-                connection.Open();
-
-                using (SqlCommand cmd = new SqlCommand(functionName, connection))
-                {
-                    cmd.CommandType = CommandType.Text;
-
-                    foreach (var param in parameters)
-                    {
-                        cmd.Parameters.Add(param);
-                    }
-
-                    using (SqlDataReader reader = cmd.ExecuteReader())
-                    {
-                        resultTable.Load(reader);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                WinformControlUtil.ShowMessage("Notification", "Execution failed: " + ex.Message);
-            }
-            finally
-            {
-                connection.Close();
-            }
-
-            return resultTable;
         }
 
         #endregion
@@ -207,5 +131,163 @@ namespace ProjectManagement.Database
         }
 
         #endregion
+
+        #region EXTEND CRUD
+
+        public static void InsertDynamic(string tableName, List<KeyValuePair<string, string>> columnValues)
+        {
+            // Build the SQL command string to call the stored procedure
+            string sqlStr = "EXEC PROC_InsertDynamic @TableName, @ColumnsValues";
+
+            // Define the parameters list, including @TableName
+            List<SqlParameter> parameters = new List<SqlParameter>
+            {
+                new SqlParameter("@TableName", tableName)
+            };
+
+            // Create a DataTable to store the column-value pairs
+            DataTable columnValueTable = new DataTable();
+            columnValueTable.Columns.Add("ColumnName", typeof(string));
+            columnValueTable.Columns.Add("ColumnValue", typeof(string));
+
+            // Populate the DataTable with each column-value pair
+            foreach (var columnValue in columnValues)
+            {
+                columnValueTable.Rows.Add(columnValue.Key, columnValue.Value);
+            }
+
+            // Add the DataTable as a parameter with SQL Server's custom type "ConditionType"
+            SqlParameter conditionParam = new SqlParameter("@ColumnsValues", columnValueTable)
+            {
+                SqlDbType = SqlDbType.Structured,
+                TypeName = "ConditionType"  // Custom table type defined in SQL Server
+            };
+            parameters.Add(conditionParam);
+
+            // Execute the SQL command using DBExecution's SQLExecuteNonQuery
+            SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
+        }
+
+        public static void UpdateDynamic(string tableName, List<KeyValuePair<string, string>> setValues, List<KeyValuePair<string, string>> conditions)
+        {
+            // SQL command to execute stored procedure
+            string sqlStr = "EXEC PROC_UpdateDynamic @TableName, @SetValues, @Conditions";
+
+            // Define the parameters list
+            List<SqlParameter> parameters = new List<SqlParameter>
+            {
+                new SqlParameter("@TableName", tableName)
+            };
+
+            // Create DataTables for SetValues and Conditions
+            DataTable setValueTable = new DataTable();
+            setValueTable.Columns.Add("ColumnName", typeof(string));
+            setValueTable.Columns.Add("ColumnValue", typeof(string));
+
+            DataTable conditionTable = new DataTable();
+            conditionTable.Columns.Add("ColumnName", typeof(string));
+            conditionTable.Columns.Add("ColumnValue", typeof(string));
+
+            // Populate the SetValues DataTable
+            foreach (var setValue in setValues)
+            {
+                setValueTable.Rows.Add(setValue.Key, setValue.Value);
+            }
+
+            // Populate the Conditions DataTable
+            foreach (var condition in conditions)
+            {
+                conditionTable.Rows.Add(condition.Key, condition.Value);
+            }
+
+            // Add DataTables as structured parameters
+            SqlParameter setParam = new SqlParameter("@SetValues", setValueTable)
+            {
+                SqlDbType = SqlDbType.Structured,
+                TypeName = "ConditionType"
+            };
+            parameters.Add(setParam);
+
+            SqlParameter conditionParam = new SqlParameter("@Conditions", conditionTable)
+            {
+                SqlDbType = SqlDbType.Structured,
+                TypeName = "ConditionType"
+            };
+            parameters.Add(conditionParam);
+
+            // Execute the SQL command using DBExecution's SQLExecuteNonQuery
+            SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
+        }
+
+        public static void DeleteDynamic(string tableName, List<KeyValuePair<string, string>> conditions)
+        {
+            // Build the SQL string to execute the stored procedure
+            string sqlStr = "EXEC PROC_DeleteDynamic @TableName, @Conditions";
+
+            // Add the @TableName parameter
+            List<SqlParameter> parameters = new List<SqlParameter>
+            {
+                new SqlParameter("@TableName", tableName)
+            };
+
+            // Create a DataTable to hold the conditions
+            DataTable conditionTable = new DataTable();
+            conditionTable.Columns.Add("ColumnName", typeof(string));
+            conditionTable.Columns.Add("ColumnValue", typeof(string));
+
+            // Populate the DataTable with the conditions (column name, column value)
+            foreach (var condition in conditions)
+            {
+                conditionTable.Rows.Add(condition.Key, condition.Value);
+            }
+
+            // Add the DataTable as a parameter with SQL Server's "ConditionType" data type
+            SqlParameter conditionParam = new SqlParameter("@Conditions", conditionTable)
+            {
+                SqlDbType = SqlDbType.Structured,
+                TypeName = "ConditionType"  // Custom table type defined in SQL Server
+            };
+            parameters.Add(conditionParam);
+
+            // Execute the SQL command with the parameters
+            SQLExecuteNonQuery(sqlStr, parameters, string.Empty);
+        }
+
+        public static DataTable GetDynamic(string tableName, List<KeyValuePair<string, string>> conditions)
+        {
+            // Build the SQL command string to execute the stored procedure
+            string sqlStr = "EXEC PROC_GetDynamic @TableName, @Conditions";
+
+            // Define the parameters, including @TableName
+            List<SqlParameter> parameters = new List<SqlParameter>
+            {
+                new SqlParameter("@TableName", tableName)
+            };
+
+            // Create a DataTable to store conditions in the format (ColumnName, ColumnValue)
+            DataTable conditionTable = new DataTable();
+            conditionTable.Columns.Add("ColumnName", typeof(string));
+            conditionTable.Columns.Add("ColumnValue", typeof(string));
+
+            // Populate the DataTable with each condition pair
+            foreach (var condition in conditions)
+            {
+                conditionTable.Rows.Add(condition.Key, condition.Value);
+            }
+
+            // Add the condition table as a parameter of SQL Server type "ConditionType"
+            SqlParameter conditionParam = new SqlParameter("@Conditions", conditionTable)
+            {
+                SqlDbType = SqlDbType.Structured,
+                TypeName = "ConditionType"  // Custom table type defined in SQL Server
+            };
+            parameters.Add(conditionParam);
+
+            // Execute the SQL command and return the result as a DataTable
+            return SQLExecuteQuery(sqlStr, parameters, string.Empty);
+        }
+
+        #endregion
+
     }
 }

@@ -21,5 +21,10 @@ namespace ProjectManagement.Mappers.Implement
 
             return team;
         }
+
+        public DataTable MapToTableType(List<Team> list)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

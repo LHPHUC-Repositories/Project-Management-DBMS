@@ -49,6 +49,7 @@
             Guna.UI2.WinForms.Suite.CustomizableEdges customizableEdges17 = new Guna.UI2.WinForms.Suite.CustomizableEdges();
             gButtonBack = new Guna.UI2.WinForms.Guna2Button();
             gShadowPanelEvaluate = new Guna.UI2.WinForms.Guna2ShadowPanel();
+            lblPercent = new Label();
             gTextBoxScores = new Guna.UI2.WinForms.Guna2TextBox();
             lblScores = new Label();
             gTextBoxCompleted = new Guna.UI2.WinForms.Guna2TextBox();
@@ -65,7 +66,6 @@
             erpEvaluation = new ErrorProvider(components);
             erpContribute = new ErrorProvider(components);
             erpScores = new ErrorProvider(components);
-            lblPercent = new Label();
             gShadowPanelEvaluate.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)gCirclePictureBoxAvatar).BeginInit();
             ((System.ComponentModel.ISupportInitialize)erpEvaluation).BeginInit();
@@ -123,6 +123,17 @@
             gShadowPanelEvaluate.ShadowShift = 6;
             gShadowPanelEvaluate.Size = new Size(640, 422);
             gShadowPanelEvaluate.TabIndex = 25;
+            // 
+            // lblPercent
+            // 
+            lblPercent.AutoSize = true;
+            lblPercent.BackColor = Color.White;
+            lblPercent.Font = new Font("Segoe UI Semibold", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblPercent.Location = new Point(565, 248);
+            lblPercent.Name = "lblPercent";
+            lblPercent.Size = new Size(33, 31);
+            lblPercent.TabIndex = 78;
+            lblPercent.Text = "%";
             // 
             // gTextBoxScores
             // 
@@ -322,7 +333,7 @@
             lblUserName.Font = new Font("Segoe UI Semibold", 10.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblUserName.Location = new Point(80, 19);
             lblUserName.Name = "lblUserName";
-            lblUserName.Size = new Size(101, 25);
+            lblUserName.Size = new Size(109, 25);
             lblUserName.TabIndex = 29;
             lblUserName.Text = "Users name";
             // 
@@ -382,17 +393,6 @@
             // 
             erpScores.ContainerControl = this;
             erpScores.Icon = (Icon)resources.GetObject("erpScores.Icon");
-            // 
-            // lblPercent
-            // 
-            lblPercent.AutoSize = true;
-            lblPercent.BackColor = Color.White;
-            lblPercent.Font = new Font("Segoe UI Semibold", 13.8F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblPercent.Location = new Point(565, 248);
-            lblPercent.Name = "lblPercent";
-            lblPercent.Size = new Size(33, 31);
-            lblPercent.TabIndex = 78;
-            lblPercent.Text = "%";
             // 
             // UCTaskEvaluateDetails
             // 

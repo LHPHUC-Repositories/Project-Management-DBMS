@@ -28,5 +28,29 @@ namespace ProjectManagement.Mappers.Implement
             return project;
         }
 
+        public DataTable MapToTableType(List<Project> list)
+        {
+            DataTable projectTable = new DataTable();
+            projectTable.Columns.Add("projectId", typeof(string));
+            projectTable.Columns.Add("instructorId", typeof(string));
+            projectTable.Columns.Add("topic", typeof(string));
+            projectTable.Columns.Add("description", typeof(string));
+            projectTable.Columns.Add("feature", typeof(string));
+            projectTable.Columns.Add("requirement", typeof(string));
+            projectTable.Columns.Add("maxMember", typeof(int));
+            projectTable.Columns.Add("status", typeof(string));
+            projectTable.Columns.Add("createdAt", typeof(DateTime));
+            projectTable.Columns.Add("createdBy", typeof(string));
+            projectTable.Columns.Add("fieldId", typeof(string));
+
+            foreach (var project in list)
+            {
+                projectTable.Rows.Add(
+                    project.ProjectId, project.InstructorId, project.Topic, project.Description,
+                    project.Feature, project.Requirement, project.MaxMember, EnumUtil.GetDisplayName(project.Status),
+                    project.CreatedAt, project.FieldId);
+            }
+            return projectTable;
+        }
     }
 }
